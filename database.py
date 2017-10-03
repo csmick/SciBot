@@ -35,8 +35,7 @@ class Database(object):
                     for text_line in f:
                         if not reference_pattern.search(text_line):
                             text += text_line.replace('/n', ' ')
-                    self.pid2text[line[2]] = (line[1], text)
-
+                    self.pid2text[data_line[2]] = (data_line[1], text)
 
         for line in open(os.path.join(self.data_root, 'PaperKeywords.txt'), 'r'):
             line = line.split('\t')
@@ -51,8 +50,7 @@ class Database(object):
 
         for line in open(os.path.join(self.data_root, 'Authors.txt'), 'r'):
             line = line.split('\t')
-            if line[0] in self.pids:
-                self.aid2authorname[line[0]] = line[1]
+            self.aid2authorname[line[0]] = line[1].rstrip('\n')
 
     def get_pids(self):
         return list(self.pids)
