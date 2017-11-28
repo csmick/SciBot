@@ -7,10 +7,10 @@ class SciBot(object):
 
     def __init__(self):
         self.db = Database()
-        self.db.import_data('./data/microsoft', './data/text')
+        self.db.clean_data('./data/text', './cleaned_data')
+        self.db.import_data('./data/microsoft', './cleaned_data')
 
     def stats(self):
-
         print('Number of unique papers: {}'.format(len(self.db.get_pids())))
         print('Number of unique authors: {}'.format(len(self.db.get_aids())))
 
@@ -45,3 +45,4 @@ class SciBot(object):
 if __name__ == "__main__":
     sb = SciBot()
     sb.stats()
+    
