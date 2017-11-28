@@ -1,8 +1,12 @@
 #!/usr/bin/python3
 
 import collections
-import re
+import nltk
 import os
+import re
+import shutil
+import string
+import sys
 
 class Database(object):
 
@@ -15,6 +19,42 @@ class Database(object):
         self.pid2authorseq = collections.defaultdict(lambda: ('', '', '', ''))      # maps PID to (AID, FID, AFF, SID)
         self.aid2authorname = collections.defaultdict(str)                          # maps AID to AUT
         self.aid2pids = collections.defaultdict(list)                               # maps AID to list of PIDS
+
+    def clean_data(self, src, dest):
+        # Download stopwords from nltk corpus
+        nltk.data.path.append('./.nltk_data')
+        nltk.download('stopwords', download_dir='./.nltk_data', quiet=True)
+
+        punc_translator = dict.fromkeys(map(ord, string.punctuation))
+        stopwords = nltk.corpus.stopwords.words('english')
+
+        # copy all data files to dest
+        try:
+            shutil.copytree(src, dest)
+        except OSError as e:
+            if e.errno == os.errno.EEXIST:
+                print('Clean data already exists!')
+            else:
+                print(e)
+            return
+
+        # Iterate over data files
+        for root, dirs, files in os.walk(dest):
+            for filename in files:
+                if not filename.startswith('.'):
+                    with open(os.path.join(root, filename), 'r+') as f:
+                        text = f.read().lower()
+                        
+                        # Remove punctuation
+                        text = text.translate(PUNC_TRANSLATOR)
+
+                        # Remove stopwords
+                        text = ' '.join(word for word in text.split() if word not in STOPWORDS)
+
+                        # Overwrite file
+                        f.seek(0)
+                        f.write(text)
+                        f.truncate()
 
     def import_data(self, data_root, text_root):
         self.data_root = os.path.abspath(data_root)
