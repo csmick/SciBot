@@ -32,9 +32,7 @@ class Database(object):
         try:
             shutil.copytree(src, dest)
         except OSError as e:
-            if e.errno == os.errno.EEXIST:
-                print('Clean data already exists!')
-            else:
+            if e.errno != os.errno.EEXIST:
                 print(e)
             return
 
@@ -46,10 +44,10 @@ class Database(object):
                         text = f.read().lower()
                         
                         # Remove punctuation
-                        text = text.translate(PUNC_TRANSLATOR)
+                        text = text.translate(punc_translator)
 
                         # Remove stopwords
-                        text = ' '.join(word for word in text.split() if word not in STOPWORDS)
+                        text = ' '.join(word for word in text.split() if word not in stopwords)
 
                         # Overwrite file
                         f.seek(0)
@@ -100,4 +98,10 @@ class Database(object):
 
     def get_aids(self):
         return list(self.aids)
+
+    def get_keywords(self):
+        keywords = set()
+        for pid, keyword in self.pid2keyword.items():
+            keywords.add(keyword)
+        return list(keywords)
 
