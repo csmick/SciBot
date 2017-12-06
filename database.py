@@ -11,14 +11,15 @@ import sys
 class Database(object):
 
     def __init__(self):
+        self.conferences = set(['icdm', 'kdd', 'wsdm', 'www']) 
         self.pids = set()
         self.aids = set()
         self.pid2text = collections.defaultdict(lambda: ('', ''))                   # maps PID to (PDFID, text)
         self.pid2title_year_conf = collections.defaultdict(lambda: ('', '', ''))    # maps PID to (TITLE, YEAR, CONF)
         self.pid2keyword = collections.defaultdict(str)                             # maps PID to KEYWORD
-        self.pid2authorseq = collections.defaultdict(lambda: ('', '', '', ''))      # maps PID to (AID, FID, AFF, SID)
+        self.pid2aids = collections.defaultdict(set)                                # maps PID to set of AIDS
         self.aid2authorname = collections.defaultdict(str)                          # maps AID to AUT
-        self.aid2pids = collections.defaultdict(list)                               # maps AID to list of PIDS
+        self.aid2pids = collections.defaultdict(set)                                # maps AID to set of PIDS
 
     def clean_data(self, src, dest):
         # Download stopwords from nltk corpus
@@ -57,7 +58,6 @@ class Database(object):
     def import_data(self, data_root, text_root):
         self.data_root = os.path.abspath(data_root)
         self.text_root = os.path.abspath(text_root)
-        conferences = set(['icdm', 'kdd', 'wsdm', 'www']) 
         
         reference_pattern = re.compile('^\[')
         for data_line in open(os.path.join(self.data_root, 'index.txt')):
@@ -72,7 +72,7 @@ class Database(object):
 
         for line in open(os.path.join(self.data_root, 'Papers.txt'), 'r'):
             line = line.split('\t')
-            if line[0] in self.pids and line[7] in conferences:
+            if line[0] in self.pids and line[7] in self.conferences:
                 self.pid2title_year_conf[line[0]] = (line[1], line[3], line[7])
                 self.pids.add(line[0])
         
@@ -84,8 +84,8 @@ class Database(object):
         for line in open(os.path.join(self.data_root, 'PaperAuthorAffiliations.txt'), 'r'):
             line = line.split('\t')
             if line[0] in self.pids:
-                self.pid2authorseq[line[0]] = (line[1], line[2], line[4], line[5])
-                self.aid2pids[line[1]].append(line[0])
+                self.pid2aids[line[0]].add(line[1])
+                self.aid2pids[line[1]].add(line[0])
                 self.aids.add(line[1])
 
         for line in open(os.path.join(self.data_root, 'Authors.txt'), 'r'):
