@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import itertools
-from collections import Counter
+from collections import defaultdict, Counter
 from database import Database
 from heapq import *
 
@@ -170,17 +170,51 @@ class SciBot(object):
             if not f:
                 break
 
+    def naive_bayes(self):
+        total_count = 0
+        keyword_counts = Counter()
+        conference_counts = Counter()
+        keyword_counts_given_conf = defaultdict(Counter)
+        pids = self.db.get_pids()
+        training_pids, testing_pids = pids[:-100], pids[-100:]
+        for pid in training_pids:
+            title, year, conf = self.db.pid2title_year_conf[pid]
+            keyword = self.db.pid2keyword[pid]
+            keyword_counts_given_conf[conf][keyword] += 1
+            keyword_counts[keyword] += 1
+            conference_counts[conf] += 1
+            total_count += 1
+
+        num_correct = 0
+        for pid in testing_pids:
+            max_prob = ('', 0)
+            keyword = self.db.pid2keyword[pid]
+            if keyword not in keyword_counts.keys():
+                max_prob = (max(conference_counts.items(), key=(lambda c: c[1]))[0], 1/len(self.db.conferences))
+            else:
+                for conf in self.db.conferences: 
+                    prob = (keyword_counts_given_conf[conf][keyword]/conference_counts[conf])*(conference_counts[conf]/total_count)/(keyword_counts[keyword]/total_count)
+                    if prob > max_prob[1]:
+                        max_prob = (conf, prob)
+            actual_conf = self.db.pid2title_year_conf[pid][2]
+            print('PID: {}\nCONFERENCE: {}\nCONFERENCE PREDICTION: {}\nPROBABILITY:{:0.2f}\n'.format(pid, actual_conf, max_prob[0], max_prob[1]))
+            if max_prob[0] == actual_conf:
+                num_correct += 1
+        print('Accuracy: {:0.2f}%'.format(num_correct*100/len(testing_pids)))
+
 if __name__ == "__main__":
     sb = SciBot()
 #    sb.stats()
 #    sb.extract_entities_absolute_support()
 #    sb.extract_entities_lexical_features()
     
-    author_sets = []
-    for pid, aids in sb.db.pid2aids.items():
-        authors = set()
-        for aid in aids:
-            authors.add(sb.db.aid2authorname[aid])
-        author_sets.append(authors)
-    sb.apriori_fpm(author_sets, min_sup=2)
+#    author_sets = []
+#    for pid, aids in sb.db.pid2aids.items():
+#        authors = set()
+#        for aid in aids:
+#            authors.add(sb.db.aid2authorname[aid])
+#        author_sets.append(authors)
+#    sb.apriori_fpm(author_sets, min_sup=2)
+
+    sb.naive_bayes()
     

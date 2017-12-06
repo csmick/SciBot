@@ -94,14 +94,14 @@ class Database(object):
                 self.aid2authorname[line[0]] = line[1].rstrip('\n')
 
     def get_pids(self):
-        return list(self.pids)
+        return sorted(list(self.pids))
 
     def get_aids(self):
-        return list(self.aids)
+        return sorted(list(self.aids))
 
     def get_keywords(self):
         keywords = set()
         for pid, keyword in self.pid2keyword.items():
             keywords.add(keyword)
-        return list(keywords)
+        return sorted(list(keywords))
 
