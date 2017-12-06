@@ -16,7 +16,7 @@ class Database(object):
         self.aids = set()
         self.pid2text = collections.defaultdict(lambda: ('', ''))                   # maps PID to (PDFID, text)
         self.pid2title_year_conf = collections.defaultdict(lambda: ('', '', ''))    # maps PID to (TITLE, YEAR, CONF)
-        self.pid2keyword = collections.defaultdict(str)                             # maps PID to KEYWORD
+        self.pid2keywords = collections.defaultdict(set)                            # maps PID to a set of KEYWORDS
         self.pid2aids = collections.defaultdict(set)                                # maps PID to set of AIDS
         self.aid2authorname = collections.defaultdict(str)                          # maps AID to AUT
         self.aid2pids = collections.defaultdict(set)                                # maps AID to set of PIDS
@@ -79,7 +79,7 @@ class Database(object):
         for line in open(os.path.join(self.data_root, 'PaperKeywords.txt'), 'r'):
             line = line.split('\t')
             if line[0] in self.pids:
-                self.pid2keyword[line[0]] = line[1]
+                self.pid2keywords[line[0]].add(line[1])
 
         for line in open(os.path.join(self.data_root, 'PaperAuthorAffiliations.txt'), 'r'):
             line = line.split('\t')
@@ -101,7 +101,8 @@ class Database(object):
 
     def get_keywords(self):
         keywords = set()
-        for pid, keyword in self.pid2keyword.items():
-            keywords.add(keyword)
+        for pid in self.pid2keywords.keys():
+            for keyword in self.pid2keywords[pid]:
+                keywords.add(keyword)
         return sorted(list(keywords))
 
